@@ -2,8 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Permitimos el escalado nativo si el usuario lo desea, pero controlaremos el zoom de la imagen por JS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú Hanari Coffee</title>
+    
+    <!-- Cargamos PinchZoom desde un CDN confiable para gestionar los gestos táctiles y el ratón de forma fluida -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pinch-zoom-js/2.3.4/pinch-zoom.min.js"></script>
+
     <style>
         /* Estilos generales */
         body {
@@ -14,8 +19,13 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
             font-family: 'Arial', sans-serif;
+            /* Cambiado a dinámico para permitir scroll cuando esté abierto si es necesario */
+            overflow: hidden; 
+        }
+
+        body.menu-abierto {
+            overflow: auto;
         }
 
         /* CONTENEDOR PRINCIPAL DEL PERGAMINO */
@@ -24,7 +34,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
             padding: 20px;
             transition: transform 0.5s ease;
         }
@@ -39,8 +48,15 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border-top: 4px solid #8B4513;
             border-bottom: 4px solid #8B4513;
+        }
+
+        /* Contenedor específico para el área de zoom */
+        .zoom-wrapper {
+            width: 100%;
+            height: 80vh;
             display: flex;
             justify-content: center;
+            overflow: hidden;
         }
 
         /* La imagen dentro del pergamino */
@@ -48,7 +64,13 @@
             height: 80vh;
             width: auto;
             display: block;
-            pointer-events: none;
+            /* Se activa la interacción para el zoom una vez abierto */
+            pointer-events: none; 
+            max-width: none;
+        }
+
+        .pergamino-container.abierto .pergamino-cuerpo img {
+            pointer-events: auto;
         }
 
         /* Los rodillos de madera laterales */
@@ -59,6 +81,7 @@
             border-radius: 5px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.4);
             z-index: 10;
+            cursor: pointer; /* Indica que se puede hacer click en los extremos */
         }
 
         .rodillo::before, .rodillo::after {
@@ -90,26 +113,29 @@
             text-shadow: 1px 1px 2px black;
             transition: opacity 0.5s;
             white-space: nowrap;
+            pointer-events: none;
         }
 
         .pergamino-container.abierto .instruccion {
-            opacity: 0.3;
+            opacity: 0.5;
         }
 
         /* ========================================================
            TRUCO CSS: FORZAR ROTACIÓN EN PANTALLAS VERTICALES (MÓVILES)
            ======================================================== */
         @media (max-width: 768px) and (orientation: portrait) {
-            /* Rotamos el contenedor del pergamino 90 grados */
             .pergamino-container {
                 transform: rotate(90deg);
                 transform-origin: center center;
             }
 
-            /* Ajustamos los tamaños para que quepan perfectamente al estar volteado */
             .pergamino-cuerpo {
-                max-width: 80vh;  /* Ahora el ancho depende del alto de la pantalla */
-                max-height: 85vw; /* Y el alto depende del ancho de la pantalla */
+                max-width: 80vh;  
+                max-height: 85vw; 
+            }
+
+            .zoom-wrapper {
+                height: 85vw;
             }
 
             .pergamino-cuerpo img {
@@ -121,9 +147,8 @@
                 height: calc(85vw + 20px);
             }
 
-            /* Modificamos el texto para avisarles que deben girar el móvil */
             .instruccion::after {
-                content: " 🔄 (Voltea tu teléfono)";
+                content: " 🔄 (Usa 2 dedos para hacer zoom)";
                 display: block;
                 font-size: 0.8rem;
                 color: #ffb74d;
@@ -135,26 +160,68 @@
 </head>
 <body>
 
-    <div class="pergamino-container" onclick="togglePergamino()">
-        <!-- Rodillo Izquierdo -->
-        <div class="rodillo"></div>
+    <div class="pergamino-container">
+        <!-- Rodillo Izquierdo (Mantiene el click de abrir/cerrar) -->
+        <div class="rodillo" onclick="togglePergamino()"></div>
 
         <!-- Cuerpo del pergamino -->
         <div class="pergamino-cuerpo">
-            <img src="Hanari%20Images/menu%20image.jpeg" alt="Menú Hanari Coffee">
+            <!-- Envase específico que controlará la librería de Zoom -->
+            <div class="zoom-wrapper" id="zoom-area">
+                <img src="Hanari%20Images/menu%20image.jpeg" alt="Menú Hanari Coffee" id="menu-img">
+            </div>
         </div>
 
-        <!-- Rodillo Derecho -->
-        <div class="rodillo"></div>
+        <!-- Rodillo Derecho (Mantiene el click de abrir/cerrar) -->
+        <div class="rodillo" onclick="togglePergamino()"></div>
 
         <!-- Texto de guía -->
-        <div class="instruccion">Click para Abrir / Cerrar</div>
+        <div class="instruccion" id="texto-guia">Click en los rodillos para Abrir / Cerrar</div>
     </div>
 
     <script>
+        let pzInstance = null;
+
+        // Inicializamos el sistema de zoom de manera controlada
+        function inicializarZoom() {
+            const el = document.getElementById('zoom-area');
+            if (el && !pzInstance) {
+                pzInstance = new PinchZoom(el, {
+                    tapZoomFactor: 2,
+                    maxZoom: 4,
+                    minZoom: 1,
+                    draggableUnzoomed: false // Evita que se mueva la imagen si no tiene zoom
+                });
+            }
+        }
+
         function togglePergamino() {
             const container = document.querySelector('.pergamino-container');
-            container.classList.toggle('abierto');
+            const instruccion = document.getElementById('texto-guia');
+            const estaAbierto = container.classList.toggle('abierto');
+            
+            if (estaAbierto) {
+                document.body.classList.add('menu-abierto');
+                instruccion.textContent = "Usa tus dedos o ratón para hacer Zoom";
+                
+                // Esperamos a que la animación de apertura termine (1.5s) para activar el zoom de forma limpia
+                setTimeout(() => {
+                    inicializarZoom();
+                }, 1500);
+            } else {
+                document.body.classList.remove('menu-abierto');
+                instruccion.textContent = "Click en los rodillos para Abrir / Cerrar";
+                
+                // Si se cierra, reseteamos el zoom para que vuelva a su tamaño original
+                if (pzInstance) {
+                    pzInstance.setTransform({
+                        x: 0,
+                        y: 0,
+                        scale: 1,
+                        animate: true
+                    });
+                }
+            }
         }
     </script>
 
