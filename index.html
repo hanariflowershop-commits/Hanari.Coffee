@@ -2,11 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Permitimos el escalado nativo si el usuario lo desea, pero controlaremos el zoom de la imagen por JS -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú Hanari Coffee</title>
     
-    <!-- Cargamos PinchZoom desde un CDN confiable para gestionar los gestos táctiles y el ratón de forma fluida -->
+    <!-- Librería PinchZoom para gestionar los gestos táctiles y el ratón de forma fluida -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pinch-zoom-js/2.3.4/pinch-zoom.min.js"></script>
 
     <style>
@@ -20,7 +19,6 @@
             align-items: center;
             min-height: 100vh;
             font-family: 'Arial', sans-serif;
-            /* Cambiado a dinámico para permitir scroll cuando esté abierto si es necesario */
             overflow: hidden; 
         }
 
@@ -64,7 +62,6 @@
             height: 80vh;
             width: auto;
             display: block;
-            /* Se activa la interacción para el zoom una vez abierto */
             pointer-events: none; 
             max-width: none;
         }
@@ -81,7 +78,7 @@
             border-radius: 5px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.4);
             z-index: 10;
-            cursor: pointer; /* Indica que se puede hacer click en los extremos */
+            cursor: pointer;
         }
 
         .rodillo::before, .rodillo::after {
@@ -102,7 +99,7 @@
             width: 100%; 
         }
 
-        /* Indicador o botón flotante */
+        /* Indicador o botón flotante inferior */
         .instruccion {
             position: absolute;
             bottom: -40px;
@@ -118,6 +115,77 @@
 
         .pergamino-container.abierto .instruccion {
             opacity: 0.5;
+        }
+
+        /* ========================================================
+           PERSONAJE: LIUR (PANDA ROJO) Y GLOBO DE TEXTO
+           ======================================================== */
+        .liur-asistente {
+            position: absolute;
+            top: -110px; /* Posicionado arriba del pergamino cerrado */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 20;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            pointer-events: none; /* No interfiere con los clicks */
+        }
+
+        /* Imagen de Liur */
+        .liur-img {
+            width: 90px;
+            height: auto;
+            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.5));
+        }
+
+        /* Globo de diálogo estilo cómic/bocadillo */
+        .liur-globo {
+            background-color: #f5f5dc;
+            color: #2b1d16;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 2px solid #8B4513;
+            max-width: 220px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        /* Flecha del globo apuntando hacia abajo (hacia el pergamino) */
+        .liur-globo::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #f5f5dc transparent;
+            display: block;
+            width: 0;
+        }
+        
+        .liur-globo::before {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 11px 11px 0;
+            border-style: solid;
+            border-color: #8B4513 transparent;
+            display: block;
+            width: 0;
+            z-index: -1;
+        }
+
+        /* Ocultar a Liur cuando el pergamino esté abierto */
+        .pergamino-container.abierto .liur-asistente {
+            opacity: 0;
+            transform: translateY(-20px);
         }
 
         /* ========================================================
@@ -147,6 +215,46 @@
                 height: calc(85vw + 20px);
             }
 
+            /* Contrarrotamos a Liur en móviles para que se vea derecho aunque el menú gire */
+            .liur-asistente {
+                transform: rotate(-90deg);
+                top: auto;
+                left: -190px; /* Lo acomoda en el lateral izquierdo visualmente */
+                flex-direction: row; /* Cambia el flujo para adaptarse a la rotación */
+            }
+
+            .liur-globo {
+                margin-bottom: 0;
+                margin-right: 15px;
+                max-width: 160px;
+                font-size: 0.85rem;
+            }
+
+            /* Cambiamos la dirección de la flecha del globo para la vista móvil */
+            .liur-globo::after {
+                bottom: auto;
+                left: auto;
+                right: -10px;
+                top: 50%;
+                transform: translateY(-50%);
+                border-width: 10px 0 10px 10px;
+                border-color: transparent transparent transparent #f5f5dc;
+            }
+            .liur-globo::before {
+                bottom: auto;
+                left: auto;
+                right: -13px;
+                top: 50%;
+                transform: translateY(-50%);
+                border-width: 11px 0 11px 11px;
+                border-color: transparent transparent transparent #8B4513;
+            }
+
+            .pergamino-container.abierto .liur-asistente {
+                opacity: 0;
+                transform: rotate(-90deg) translateX(-20px);
+            }
+
             .instruccion::after {
                 content: " 🔄 (Usa 2 dedos para hacer zoom)";
                 display: block;
@@ -161,28 +269,33 @@
 <body>
 
     <div class="pergamino-container">
-        <!-- Rodillo Izquierdo (Mantiene el click de abrir/cerrar) -->
+        
+        <!-- PERSONAJE LIUR CON SU TEXTO EXPLICATIVO -->
+        <div class="liur-asistente">
+            <div class="liur-globo">¡Hola! Presiona los rodillos de madera para abrir el menú 📜</div>
+            <img src="Liur.PNG" alt="Liur el Panda Rojo" class="liur-img">
+        </div>
+
+        <!-- Rodillo Izquierdo -->
         <div class="rodillo" onclick="togglePergamino()"></div>
 
         <!-- Cuerpo del pergamino -->
         <div class="pergamino-cuerpo">
-            <!-- Envase específico que controlará la librería de Zoom -->
             <div class="zoom-wrapper" id="zoom-area">
                 <img src="Hanari%20Images/menu%20image.jpeg" alt="Menú Hanari Coffee" id="menu-img">
             </div>
         </div>
 
-        <!-- Rodillo Derecho (Mantiene el click de abrir/cerrar) -->
+        <!-- Rodillo Derecho -->
         <div class="rodillo" onclick="togglePergamino()"></div>
 
-        <!-- Texto de guía -->
-        <div class="instruccion" id="texto-guia">Click en los rodillos para Abrir / Cerrar</div>
+        <!-- Texto de guía inferior -->
+        <div class="instruccion" id="texto-guia">Click para Abrir / Cerrar</div>
     </div>
 
     <script>
         let pzInstance = null;
 
-        // Inicializamos el sistema de zoom de manera controlada
         function inicializarZoom() {
             const el = document.getElementById('zoom-area');
             if (el && !pzInstance) {
@@ -190,7 +303,7 @@
                     tapZoomFactor: 2,
                     maxZoom: 4,
                     minZoom: 1,
-                    draggableUnzoomed: false // Evita que se mueva la imagen si no tiene zoom
+                    draggableUnzoomed: false 
                 });
             }
         }
@@ -204,15 +317,13 @@
                 document.body.classList.add('menu-abierto');
                 instruccion.textContent = "Usa tus dedos o ratón para hacer Zoom";
                 
-                // Esperamos a que la animación de apertura termine (1.5s) para activar el zoom de forma limpia
                 setTimeout(() => {
                     inicializarZoom();
                 }, 1500);
             } else {
                 document.body.classList.remove('menu-abierto');
-                instruccion.textContent = "Click en los rodillos para Abrir / Cerrar";
+                instruccion.textContent = "Click para Abrir / Cerrar";
                 
-                // Si se cierra, reseteamos el zoom para que vuelva a su tamaño original
                 if (pzInstance) {
                     pzInstance.setTransform({
                         x: 0,
