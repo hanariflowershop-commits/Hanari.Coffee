@@ -1,1 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Hanari Coffee</title>
+    <style>
+        /* Estilos generales del fondo con temática japonesa/cafetería */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1512; /* Fondo oscuro elegante */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Arial', sans-serif;
+        }
 
+        /* Contenedor principal del pergamino */
+        .pergamino-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 20px;
+        }
+
+        /* El cuerpo del pergamino (la imagen del menú) */
+        .pergamino-cuerpo {
+            max-width: 90vw;
+            max-height: 80vh;
+            width: 0px; /* Inicia cerrado */
+            overflow: hidden;
+            transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-top: 4px solid #8B4513;
+            border-bottom: 4px solid #8B4513;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* La imagen dentro del pergamino */
+        .pergamino-cuerpo img {
+            height: 80vh;
+            width: auto;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Los rodillos de madera laterales */
+        .rodillo {
+            width: 25px;
+            height: calc(80vh + 20px);
+            background: linear-gradient(to right, #5c2c16, #8B4513, #5c2c16);
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            z-index: 10;
+            transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Tapas doradas/decorativas para los extremos de los rodillos */
+        .rodillo::before, .rodillo::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 31px;
+            height: 15px;
+            background: linear-gradient(to right, #b8860b, #ffd700, #b8860b);
+            border-radius: 3px;
+        }
+        .rodillo::before { top: -15px; }
+        .rodillo::after { bottom: -15px; }
+
+        /* Cuando el pergamino está ABIERTO */
+        .pergamino-container.abierto .pergamino-cuerpo {
+            width: 100%; /* Se expande al tamaño total de la imagen */
+        }
+
+        /* Indicador o botón flotante para guiar al usuario */
+        .instruccion {
+            position: absolute;
+            bottom: -40px;
+            color: #f5f5dc;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 2px black;
+            transition: opacity 0.5s;
+        }
+
+        .pergamino-container.abierto .instruccion {
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Al hacer clic en este contenedor, se activará la animación -->
+    <div class="pergamino-container" onclick="togglePergamino()">
+        
+        <!-- Rodillo Izquierdo -->
+        <div class="rodillo"></div>
+
+        <!-- Cuerpo del pergamino que esconde/muestra la imagen -->
+        <div class="pergamino-cuerpo">
+            <!-- Nota cómo usamos la ruta exacta de tu carpeta e imagen reemplazando los espacios por %20 -->
+            <img src="Hanari%20Images/menu%20image.jpeg" alt="Menú Hanari Coffee">
+        </div>
+
+        <!-- Rodillo Derecho -->
+        <div class="rodillo"></div>
+
+        <!-- Texto de guía -->
+        <div class="instruccion">Click para Abrir / Cerrar</div>
+    </div>
+
+    <script>
+        // Función interactiva para abrir y cerrar
+        function togglePergamino() {
+            const container = document.querySelector('.pergamino-container');
+            container.classList.toggle('abierto');
+        }
+    </script>
+
+</body>
+</html>
